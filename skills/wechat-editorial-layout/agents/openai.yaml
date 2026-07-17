@@ -1,0 +1,4 @@
+interface:
+  display_name: "WeChat Editorial Layout"
+  short_description: "Create and safely verify WeChat Official Account drafts"
+  default_prompt: "Use $wechat-editorial-layout to prepare or repair a WeChat Official Account draft and verify its remote layout safely."
