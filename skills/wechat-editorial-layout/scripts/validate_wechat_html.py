@@ -15,15 +15,32 @@ class ArticleInspector(HTMLParser):
         self.tags: set[str] = set()
         self.images: list[dict[str, str]] = []
         self.text: list[str] = []
+        self.pre_blocks: list[str] = []
+        self._pre_depth = 0
+        self._current_pre: list[str] | None = None
 
     def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
         normalized = tag.lower()
         self.tags.add(normalized)
         if normalized == "img":
             self.images.append({key.lower(): value or "" for key, value in attrs})
+        if normalized == "pre":
+            if self._pre_depth == 0:
+                self._current_pre = []
+            self._pre_depth += 1
+
+    def handle_endtag(self, tag: str) -> None:
+        if tag.lower() != "pre" or self._pre_depth == 0:
+            return
+        self._pre_depth -= 1
+        if self._pre_depth == 0 and self._current_pre is not None:
+            self.pre_blocks.append("".join(self._current_pre))
+            self._current_pre = None
 
     def handle_data(self, data: str) -> None:
         self.text.append(data)
+        if self._pre_depth and self._current_pre is not None:
+            self._current_pre.append(data)
 
 
 def validate(path: Path, *, mode: str = "remote-draft") -> list[str]:
@@ -34,15 +51,19 @@ def validate(path: Path, *, mode: str = "remote-draft") -> list[str]:
     for banned in ("script", "iframe", "form"):
         if banned in inspector.tags:
             errors.append(f"banned <{banned}> element")
+    for block_text in inspector.pre_blocks:
+        transition_count = block_text.count("→") + block_text.count("↓")
+        if transition_count >= 3:
+            errors.append("arrow-heavy semantic workflow must be rendered as a process diagram")
     if inspector.tags.intersection({"ul", "ol", "li"}):
         errors.append("native list element may render stray markers in WeChat")
     for image in inspector.images:
-        src = image.get("src", "")
+        src = image.get("data-src") or image.get("src", "")
         invalid = image.get("data-invalid-src", "")
         if invalid:
             errors.append(f"unreplaced image placeholder: {invalid}")
         if not src:
-            errors.append("image has empty src")
+            errors.append("image has empty src and data-src")
             continue
         parsed = urlparse(src)
         if mode == "remote-draft":
