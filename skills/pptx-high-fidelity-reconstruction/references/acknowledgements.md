@@ -6,6 +6,8 @@ This skill expects a compatible `presentations` skill and its PowerPoint generat
 
 This package contains instructions and reference material only. It does not directly bundle PptxGenJS, LibreOffice, PowerPoint, WPS, or another PPTX implementation.
 
+The independent `icon-finder` skill is an optional companion for sourcing normalized SVG icons and recording per-collection license metadata. PPT reconstruction remains usable without it.
+
 ## Methodology References
 
 The workflow was informed by public presentation skills and by iterative visual QA on real reconstruction tasks:
@@ -18,6 +20,7 @@ The workflow was informed by public presentation skills and by iterative visual 
 - [PPT Agent Skills](https://github.com/sunbigfly/ppt-agent-skills): staged planning, per-slide generation, vector-oriented output, and visual QA.
 - [MiniMax PPTX Generator](https://github.com/MiniMax-AI/skills/tree/main/skills/pptx-generator): combined PPTX inspection, template editing, generation, and design-system checks.
 - [Guizang PPT Skill](https://github.com/op7418/guizang-ppt-skill): visual storytelling and editorial presentation composition.
+- [`zm1990s/skills` Icon Finder](https://github.com/zm1990s/skills/tree/main/skills/icon-finder): search-select-save interaction for presentation-ready vector icons. The companion implementation in this repository is a clean-room implementation and does not copy upstream code.
 
 These projects are references, not runtime dependencies. Users do not need to install them to use this skill.
 
