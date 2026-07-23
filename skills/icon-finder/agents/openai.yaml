@@ -1,0 +1,4 @@
+interface:
+  display_name: "Icon Finder"
+  short_description: "Find normalized SVG icons with source and license metadata"
+  default_prompt: "Use $icon-finder to find a style-consistent vector icon, save a normalized transparent SVG, and record its source and license."
