@@ -26,6 +26,8 @@ Keep titles, subtitles, section labels, body copy, KPIs, units, process labels, 
 
 Read [references/layering-and-qa.md](references/layering-and-qa.md) before implementing hybrid reconstruction.
 
+Read [references/acknowledgements.md](references/acknowledgements.md) only when maintaining or publishing this skill, or when reviewing its dependency and attribution boundaries.
+
 ## Workflow
 
 1. Audit every source page at full resolution. Record the slide size, text regions, decorative regions, repeated components, icons, and structural boundaries.
