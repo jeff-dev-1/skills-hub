@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import re
 from html.parser import HTMLParser
 from pathlib import Path
 from urllib.parse import unquote, urlparse
@@ -16,26 +17,50 @@ class ArticleInspector(HTMLParser):
         self.images: list[dict[str, str]] = []
         self.text: list[str] = []
         self.pre_blocks: list[str] = []
+        self.tables: list[dict[str, object]] = []
         self._pre_depth = 0
         self._current_pre: list[str] | None = None
+        self._current_table: dict[str, object] | None = None
+        self._current_row_cells = 0
 
     def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
         normalized = tag.lower()
+        normalized_attrs = {key.lower(): value or "" for key, value in attrs}
         self.tags.add(normalized)
         if normalized == "img":
-            self.images.append({key.lower(): value or "" for key, value in attrs})
+            self.images.append(normalized_attrs)
         if normalized == "pre":
             if self._pre_depth == 0:
                 self._current_pre = []
             self._pre_depth += 1
+        if normalized == "table":
+            if self._current_table is not None:
+                self._current_table["nested"] = True
+            else:
+                self._current_table = {
+                    "attrs": normalized_attrs,
+                    "row_cells": [],
+                    "nested": False,
+                }
+        elif normalized == "tr" and self._current_table is not None:
+            self._current_row_cells = 0
+        elif normalized in {"th", "td"} and self._current_table is not None:
+            self._current_row_cells += 1
 
     def handle_endtag(self, tag: str) -> None:
-        if tag.lower() != "pre" or self._pre_depth == 0:
-            return
-        self._pre_depth -= 1
-        if self._pre_depth == 0 and self._current_pre is not None:
-            self.pre_blocks.append("".join(self._current_pre))
-            self._current_pre = None
+        normalized = tag.lower()
+        if normalized == "pre" and self._pre_depth:
+            self._pre_depth -= 1
+            if self._pre_depth == 0 and self._current_pre is not None:
+                self.pre_blocks.append("".join(self._current_pre))
+                self._current_pre = None
+        elif normalized == "tr" and self._current_table is not None:
+            row_cells = self._current_table["row_cells"]
+            if isinstance(row_cells, list):
+                row_cells.append(self._current_row_cells)
+        elif normalized == "table" and self._current_table is not None:
+            self.tables.append(self._current_table)
+            self._current_table = None
 
     def handle_data(self, data: str) -> None:
         self.text.append(data)
@@ -55,6 +80,28 @@ def validate(path: Path, *, mode: str = "remote-draft") -> list[str]:
         transition_count = block_text.count("→") + block_text.count("↓")
         if transition_count >= 3:
             errors.append("arrow-heavy semantic workflow must be rendered as a process diagram")
+    visible_text = "\n".join(inspector.text)
+    if re.search(r"\|\s*:?-{3,}:?\s*\|", visible_text):
+        errors.append("unconverted Markdown pipe table remains in article text")
+    for table in inspector.tables:
+        attrs = table.get("attrs")
+        attrs = attrs if isinstance(attrs, dict) else {}
+        role = str(attrs.get("role", "")).lower()
+        layout = str(attrs.get("data-layout", ""))
+        style = str(attrs.get("style", "")).replace(" ", "").lower()
+        row_cells = table.get("row_cells")
+        row_cells = row_cells if isinstance(row_cells, list) else []
+        maximum_columns = max((int(value) for value in row_cells), default=0)
+        if table.get("nested"):
+            errors.append("nested tables are not mobile-safe in WeChat")
+        if role == "presentation":
+            if "table-layout:fixed" not in style:
+                errors.append("presentation table must use table-layout:fixed")
+            continue
+        if layout != "data-table":
+            errors.append("data table must use an explicit mobile-safe data-layout")
+        if maximum_columns > 2:
+            errors.append("data table has more than two columns")
     if inspector.tags.intersection({"ul", "ol", "li"}):
         errors.append("native list element may render stray markers in WeChat")
     for image in inspector.images:

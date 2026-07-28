@@ -1,4 +1,4 @@
 interface:
   display_name: "WeChat Editorial Layout"
-  short_description: "Create and safely verify WeChat Official Account drafts"
-  default_prompt: "Use $wechat-editorial-layout to prepare or repair a WeChat Official Account draft and verify its remote layout safely."
+  short_description: "Create safe WeChat drafts with mobile-safe structured visuals"
+  default_prompt: "Use $wechat-editorial-layout to turn this research article into a mobile-safe WeChat draft, render ordered architecture layers and workflows as diagrams, convert assessments and ranked hypotheses into structured cards, validate SVG text-box widths, and verify the remote layout."
