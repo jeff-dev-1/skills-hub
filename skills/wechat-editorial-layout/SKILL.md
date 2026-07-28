@@ -11,7 +11,7 @@ Turn a source-backed research package into a concise Chinese article that looks 
 
 1. Read the source package, claims, evidence bindings, and review flags before editing prose.
 2. Establish one thesis and three to five supporting judgments. Separate verified facts, vendor claims, and Milos AI inference.
-3. Detect semantic visual candidates before writing HTML. A sequence with four or more stages (three or more transitions), a feedback loop, a branch/gate, a before/after comparison, or a layered control model is a diagram candidate, not a fenced code block. Keep actual code, configuration, commands, and logs as code.
+3. Detect semantic visual candidates before writing HTML. A sequence with four or more stages (three or more transitions), a feedback loop, a branch/gate, a before/after comparison, or a layered control model is a diagram candidate, not a fenced code block. Treat verbose two-column assessments as stacked key/value rows, additive equal-role lists such as `Harness + Identity + Isolation` as an unnumbered capability grid, and root-cause probabilities with supporting/opposing/missing evidence as diagnostic ranking cards. Keep actual code, configuration, commands, and logs as code.
 4. Build the article in this reading order:
    - title and short digest;
    - one 16:9 executive-summary infographic;
@@ -22,7 +22,7 @@ Turn a source-backed research package into a concise Chinese article that looks 
    - implications, risks, and what to watch;
    - compact references.
 5. Convert Markdown to WeChat-safe HTML using inline CSS and presentation tables where stable two-column layout is required.
-6. Replace every semantic workflow block with a diagram asset. Use `scripts/render_process_diagram.py` for standard linear or feedback flows; use a custom SVG only when the process has branching, nested ownership, or topology that the standard renderer cannot express.
+6. Replace every semantic workflow block with a diagram asset. Use `scripts/render_process_diagram.py` for standard linear or feedback flows, and `scripts/render_layered_architecture.py` for five to eight text-rich ordered layers. Use a custom SVG only when the process has branching, nested ownership, or topology that the standard renderers cannot express.
 7. Build a local preview whose relative image paths resolve from the HTML file, then visually inspect every rendered image.
 8. Upload every body image with the official WeChat image API and replace local or `asset://` placeholders before creating a draft.
 9. Create a draft by default. When repairing an existing draft, update its stored `media_id`; do not create a duplicate.
@@ -39,6 +39,8 @@ Turn a source-backed research package into a concise Chinese article that looks 
 - Do not force ADC, gateway, or traffic implications into unrelated material.
 - Keep important nuance in prose; the summary image is a map, not the entire report.
 - Prefer four compact cards to long bullet walls. Prefer a lifecycle map to a pyramid when layers are not ranked.
+- Preserve relationship semantics: use arrows only for order or causality, numbers only for sequence, and equal-role cards for additive capability stacks.
+- Do not pass a Markdown pipe table directly to the generic converter. A short factual comparison may use an explicitly styled two-column data table; a verbose assessment matrix must become stacked rows.
 - Do not place an editorial process with four or more stages inside `<pre>` merely because arrows make it easy to type. Convert it into numbered nodes with visible connectors and keep the detailed wording in prose.
 - Use native Chinese punctuation and avoid literal translation from the LinkedIn version.
 
@@ -55,12 +57,18 @@ Hard requirements:
 - no JavaScript, forms, iframe, local paths, data URLs, OAuth tokens, or secrets;
 - no unreplaced `asset://` or `data-invalid-src` attributes in a remote draft;
 - no overly wide tables; use `table-layout: fixed` for 2×2 cards;
+- no raw Markdown pipe-table syntax in final HTML;
+- verbose assessment matrices use full-width stacked rows rather than narrow key/value columns;
+- additive capability stacks use an unnumbered two-column grid and must not degrade into a bullet wall;
+- ranked root-cause hypotheses use full-width diagnostic cards with probability plus explicit supporting, opposing, and missing-evidence rows;
+- text-rich five-to-eight-stage architectures use a vertical stack with labeled connector lanes, not ASCII boxes or a compressed horizontal row;
 - avoid native `ul`, `ol`, and `li` when WeChat rendering introduces stray markers; render list rows as paragraphs with explicit markers;
 - all CSS must be inline for content sent to WeChat;
 - body images must use hosted HTTPS URLs after upload;
 - cover uses 2.35:1 and summary graphic uses 16:9;
 - supporting diagrams may use another aspect ratio when their content needs it;
 - keep text, arrows, captions, and card borders separated after WeChat downscaling;
+- SVG text does not auto-wrap: every variable-length line in a custom SVG card must be explicitly split into `<text>` or `<tspan>` lines, declare `data-max-width` and `data-font-size`, and pass the SVG text-fit validator;
 - no arrow-dense semantic process may remain as a fenced code block in final HTML;
 - public publishing remains a separate explicit action.
 
@@ -70,11 +78,17 @@ Check the first screen first: the reader must understand the thesis from the tit
 
 - no clipped or microscopic text in the summary graphic;
 - no collision between card titles and bodies;
+- no text may cross its card's inner-padding boundary; inspect card-level bounds, not only the outer SVG canvas;
 - no arrow touching a card border, no arrowhead hidden behind a card, and no caption overlapping a control row;
 - equal-role cards use consistent widths and internal padding; the number/title row is centered as one group and every following line shares the card center guide;
+- in comparison cards, short labels, explanations, and metric values share one card center guide; scan-oriented checklists stay left-aligned internally but the checklist's bounding box is centered as a group;
 - judgment grids use one outer presentation table only; each judgment is frameless with a single top accent strip and content-driven height, never a nested table inside a bordered card;
 - card content is vertically centered as one text group; short copy must not cling to the top edge and leave a large empty lower half;
 - cards stack or remain legible at 390px;
+- assessment labels, status badges, and descriptions remain readable without horizontal scrolling at 390px;
+- capability cards are equal-role, unnumbered, and free of arrows unless a real transition exists;
+- diagnostic probabilities are visibly distinct from confidence and must be labeled illustrative unless they come from a calibrated model;
+- diagnostic cards preserve evidence polarity; supporting, opposing, and missing evidence must not collapse into one generic bullet list;
 - headings have consistent spacing and alignment;
 - references are visibly secondary but still readable;
 - no unexplained blank area caused by a rejected local image URL.
@@ -90,6 +104,9 @@ Do not accept a layout based only on HTML inspection. Render it and inspect the 
 Run:
 
 ```bash
+uv run python skills/wechat-editorial-layout/scripts/validate_svg_text_fit.py \
+  path/to/custom-diagram.svg --require-contract
+
 uv run python skills/wechat-editorial-layout/scripts/validate_wechat_html.py \
   path/to/local-preview.html --mode local-preview
 

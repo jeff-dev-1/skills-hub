@@ -44,6 +44,7 @@ Supporting diagrams do not have to be 16:9. Choose the shortest canvas that pres
 - Compute the actual width of the number/title row before centering it. Equal fixed padding alone is insufficient when short copy leaves much more visible whitespace on one side.
 - Treat the number/title row and detail row as one content group. Center that group vertically inside the shared padding box instead of pinning one row to the top and one to the bottom.
 - Start primary labels at 36–40px rather than maximizing their size. Shrink to fit the available width before wrapping; never let text approach the right border. Keep detail text at 24–28px.
+- SVG `<text>` does not wrap automatically. In a custom SVG, split every variable-length card label or detail into explicit lines, and give each line a `data-max-width` equal to the card's usable inner width plus a `data-font-size` matching its rendered size.
 - Represent a feedback loop with one clearly separated return path. Do not cross the forward path or route the arrow through text.
 - Generate a dedicated LinkedIn 4:5 variant; do not crop a wide WeChat diagram into a portrait asset.
 
@@ -56,7 +57,9 @@ See [process-diagrams.md](process-diagrams.md) for diagram selection, channel pr
 - Reject a connector whose full line-and-head geometry is longer than its visible lane. A technically correct path can still look clipped when any part extends behind a card.
 - Draw connectors after card shadows in SVG document order. Keep paths inside their reserved lanes so raising the connector layer reveals the shaft without crossing card content.
 - Reject a card whose title, number badge, or detail line breaks the common inner-padding box.
+- Run `validate_svg_text_fit.py --require-contract` for custom SVGs. A clean outer canvas is insufficient when text crosses an internal card border.
 - Reject a card whose title and following lines use inconsistent horizontal alignment modes.
+- For comparison cards, use one card center guide for headings, short labels, explanations, and metric values. A checklist may keep left-aligned rows, but compute its widest row and center the checklist group inside the card instead of assigning an arbitrary left inset.
 - Reject a card when the visible whitespace before and after any centered text row is materially unequal.
 - Reject a card whose short content clings to the top edge and leaves a visibly empty lower half.
 - Use consistent widths for cards that have the same semantic role.
@@ -72,6 +75,40 @@ See [process-diagrams.md](process-diagrams.md) for diagram selection, channel pr
 - Use a single top color strip as the only card boundary. Remove side/bottom borders, inner frames, and nested layout tables.
 - Let card height follow its content. Do not add a fixed-height box merely to make four short judgments visually equal.
 - Do not use the cards to repeat the thesis verbatim.
+
+## Assessment matrices
+
+- Do not send Markdown pipe tables through the generic CommonMark converter.
+- A factual table may remain a table only when it has at most two concise columns and four short rows.
+- When either column contains sentence-length assessments, render each entry as one full-width stacked row with label, explicit maturity/status badge, and one or two short sentences.
+- Keep the label and status on the first line. Do not squeeze a long English dimension name into a narrow left column; use Chinese as the primary label and optional English as secondary text.
+- Keep assessment text as HTML, not a screenshot, so it remains selectable and accessible.
+- Group more than six rows under two to four meaningful subheadings instead of producing one long undifferentiated wall.
+
+## Capability grids
+
+- Treat `Harness + Identity + Isolation + Evaluation + Audit + Secure Execution` as composition, not sequence.
+- Use an unnumbered 2×2 or 2×3 presentation grid for four to six equal-role capabilities.
+- Give each card one short capability name and one short responsibility line.
+- Do not use arrows, step badges, or ranking colors unless the evidence defines an order, transition, or priority.
+- Convert four or more additive `+ item` Markdown lines before the generic list normalizer turns them into bullet rows.
+
+## Diagnostic rankings
+
+- Convert two or more root-cause candidates with probabilities into full-width stacked diagnostic cards.
+- Keep the candidate label and probability in one header row. Do not present probability as model confidence unless the source explicitly defines it that way.
+- Preserve evidence polarity with separate supporting, opposing, and missing-evidence rows. Do not merge them into one undifferentiated list.
+- Order candidates by the supplied probability or score, but do not invent missing probability mass or imply that the candidates are exhaustive.
+- Mark example probabilities as illustrative. Production probabilities require calibration, time scope, model version, and traceable evidence.
+- Keep evidence as selectable HTML; use an image only when the ranking itself is part of a larger architecture visual.
+
+## Layered reasoning architectures
+
+- Use a vertical stack for five to eight ordered, text-rich layers such as global prior → local calibration → incident evidence → prediction → investigation → governed action.
+- Give each stage one title and at most two compact detail lines. Put long source inventories and caveats back into prose.
+- Place transition labels in the connector lane, never inside a source or destination card.
+- Use `render_layered_architecture.py` for this grammar. Reserve the standard serpentine renderer for shorter labels and more spatial flows.
+- Do not use a vertical stack when the layers are additive peers; use a capability grid instead.
 
 ## Lifecycle map
 

@@ -25,9 +25,13 @@ Choose the smallest grammar that preserves the relationship:
 | gate / approval | decision node with explicit pass and stop/rework paths |
 | before / after | two balanced panels with the changed hot path highlighted |
 | layered system | stacked bands; state whether layers are hierarchy or lifecycle |
+| text-rich ordered architecture | vertical stage stack with labeled connector lanes |
 | repeated mapping | table or aligned cards instead of arrows |
+| additive capabilities | unnumbered 2×2 or 2×3 capability grid |
+| ranked hypotheses | stacked diagnostic cards with probability and evidence polarity |
 
 Do not use a pyramid unless the evidence supports ranking. Do not place every noun in a separate box; a node should represent a decision, state, or stage.
+Lines beginning with `+` are Markdown list syntax, not a reliable visual grammar. When four or more such lines describe equal-role capabilities, convert them to a capability grid before HTML normalization.
 
 ## Text budget
 
@@ -44,8 +48,10 @@ Do not use a pyramid unless the evidence supports ranking. Do not place every no
 - Keep a 90–100px connector lane between cards. Use a compact fixed arrowhead, at least 20px clearance from each card, and a visible shaft inside that lane. At 1600px design width, an 18–22px head length or height is normally sufficient.
 - Primary node labels: normally 36–40px at design size. Fit to the card width before considering a two-line wrap.
 - Secondary text: normally 24–28px. Remove or shorten it if it approaches the shared 28–32px card padding.
+- Custom SVG card text must use explicit line breaks because SVG `<text>` does not auto-wrap. Set `data-max-width` to the usable inner width and `data-font-size` to the rendered font size on every variable-length line.
 - Vertically center the title/detail content group inside each card and keep top and bottom optical whitespace balanced.
 - Center the badge/title row as one unit, then center every detail or wrapped line independently on the card center guide. Validate optical left/right whitespace from the card border to each visible row, not merely CSS padding values.
+- In comparison panels, center short labels and metrics on the card guide. Keep checklist rows left-aligned for scanning, but center the widest-row bounding box as one group.
 - Validate at 390px. If labels are not readable without zoom, use a taller diagram.
 - Upload the final PNG through the official API and inspect the CDN rendition.
 
@@ -68,6 +74,16 @@ uv run python skills/wechat-editorial-layout/scripts/render_process_diagram.py \
 uv run python skills/wechat-editorial-layout/scripts/render_process_diagram.py \
   path/to/flow.yaml --profile linkedin --output path/to/flow-linkedin.svg
 ```
+
+Use the layered renderer for five to eight ordered, text-rich architecture stages:
+
+```bash
+uv run python skills/wechat-editorial-layout/scripts/render_layered_architecture.py \
+  path/to/architecture.yaml --output path/to/architecture-wechat.svg
+```
+
+Each stage accepts `label`, `detail`, and an optional `transition` that labels the
+connector to the next stage. Keep `detail` to one string or a short YAML list.
 
 Input format:
 
@@ -95,6 +111,13 @@ The renderer is a baseline, not a license to skip visual QA. Render the SVG to P
 
 The generated SVG uses a square preview-safe outer canvas and records the intended crop in `data-design-width` and `data-design-height`. Render the square SVG, then center-crop the PNG to those design dimensions. This avoids the aspect-ratio clipping produced by macOS Quick Look thumbnails.
 
+Before rasterizing a custom SVG, validate its declared text boxes:
+
+```bash
+uv run python skills/wechat-editorial-layout/scripts/validate_svg_text_fit.py \
+  path/to/custom-diagram.svg --require-contract
+```
+
 ## Reject conditions
 
 Reject or redesign the visual when any of these is true:
@@ -108,10 +131,14 @@ Reject or redesign the visual when any of these is true:
 - the number badge and title do not share a visual center line;
 - the title row and subsequent detail or wrapped lines use inconsistent center guides;
 - any visible content row is left-heavy or right-heavy despite nominally equal padding;
+- a checklist is left-aligned to an arbitrary inset instead of being centered as a group;
 - a card uses unequal padding or oversized text to fill empty space;
+- any text line exceeds its declared usable width, even when it remains inside the outer SVG canvas;
 - a short title/detail group is top-heavy instead of vertically balanced;
 - an SVG marker scales with stroke width instead of using fixed user-space dimensions;
 - the return path crosses the forward path;
 - the sequence relies only on color and has no labels or numbering;
 - a LinkedIn asset is merely a crop of the WeChat diagram;
+- text-rich architecture stages are compressed into a wide row or preserved as ASCII boxes;
+- a transition label is placed inside a stage card instead of its connector lane;
 - the final HTML still contains an arrow-heavy semantic `<pre>` block.
